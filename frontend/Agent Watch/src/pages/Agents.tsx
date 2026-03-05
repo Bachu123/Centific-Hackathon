@@ -1,5 +1,6 @@
 import { AppLayout } from "@/components/AppLayout";
-import { agents as initialAgents } from "@/data/mock";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchAgents, createAgent, updateAgent, deleteAgent } from "@/lib/api";
 import { Agent } from "@/types";
 import { AgentAvatar, AgentName } from "@/components/AgentIdentity";
 import {
@@ -51,16 +52,42 @@ const emptyForm = (): Omit<Agent, "id" | "karma" | "post_count" | "is_verified" 
 
 const AgentsPage = () => {
   const { toast } = useToast();
-  const [agents, setAgents] = useState<Agent[]>(initialAgents);
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("karma");
   const [formOpen, setFormOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [removeAgent, setRemoveAgent] = useState<Agent | null>(null);
-  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm());
   const [topicsInput, setTopicsInput] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Fetch agents from API
+  const { data, isLoading } = useQuery({
+    queryKey: ["agents"],
+    queryFn: async () => {
+      const res = await fetchAgents();
+      return res.data as Agent[];
+    },
+  });
+
+  const agents = data || [];
+
+  // Mutations
+  const createMutation = useMutation({
+    mutationFn: (body: any) => createAgent(body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["agents"] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, body }: { id: string; body: any }) => updateAgent(id, body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["agents"] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteAgent(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["agents"] }),
+  });
 
   // Derived
   const filtered = useMemo(() => {
@@ -116,49 +143,37 @@ const AgentsPage = () => {
 
   const handleSubmit = async () => {
     if (!validate()) return;
-    setSaving(true);
-    // Simulate API delay
-    await new Promise((r) => setTimeout(r, 400));
 
     const topics = topicsInput
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
 
-    if (editingAgent) {
-      setAgents((prev) =>
-        prev.map((a) =>
-          a.id === editingAgent.id
-            ? { ...a, ...form, topics }
-            : a
-        )
-      );
-      toast({ title: "Agent updated.", description: `${form.name} has been saved.` });
-    } else {
-      const newAgent: Agent = {
-        id: `a${Date.now()}`,
-        ...form,
-        topics,
-        is_verified: false,
-        karma: 0,
-        post_count: 0,
-        created_at: new Date().toISOString(),
-      };
-      setAgents((prev) => [...prev, newAgent]);
-      toast({ title: "Agent added.", description: `${form.name} is ready to go.` });
+    const body = { ...form, topics };
+
+    try {
+      if (editingAgent) {
+        await updateMutation.mutateAsync({ id: editingAgent.id, body });
+        toast({ title: "Agent updated.", description: `${form.name} has been saved.` });
+      } else {
+        await createMutation.mutateAsync(body);
+        toast({ title: "Agent added.", description: `${form.name} is ready to go.` });
+      }
+      setFormOpen(false);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     }
-    setSaving(false);
-    setFormOpen(false);
   };
 
   const handleRemove = async () => {
     if (!removeAgent) return;
-    setSaving(true);
-    await new Promise((r) => setTimeout(r, 300));
-    setAgents((prev) => prev.filter((a) => a.id !== removeAgent.id));
-    toast({ title: "Agent removed.", description: `${removeAgent.name} has been removed.` });
-    setSaving(false);
-    setRemoveAgent(null);
+    try {
+      await deleteMutation.mutateAsync(removeAgent.id);
+      toast({ title: "Agent removed.", description: `${removeAgent.name} has been removed.` });
+      setRemoveAgent(null);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
   };
 
   const toggleSkill = (skill: string) => {
@@ -169,6 +184,8 @@ const AgentsPage = () => {
         : [...f.skills, skill],
     }));
   };
+
+  const saving = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
   return (
     <AppLayout>
@@ -217,7 +234,11 @@ const AgentsPage = () => {
       </div>
 
       {/* Agent List */}
-      {filtered.length === 0 && agents.length === 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 size={32} className="animate-spin text-muted-foreground" />
+        </div>
+      ) : filtered.length === 0 && agents.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
             <Bot size={32} className="text-muted-foreground" />
