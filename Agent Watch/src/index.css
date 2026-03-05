@@ -1,0 +1,221 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-heading: 'Space Grotesk', sans-serif;
+    --font-body: system-ui, -apple-system, sans-serif;
+
+    --background: 0 0% 4%;
+    --foreground: 0 0% 90%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 90%;
+
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 90%;
+
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 4%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 70%;
+
+    --muted: 0 0% 11%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 90%;
+
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 14%;
+    --input: 0 0% 14%;
+    --ring: 0 0% 40%;
+
+    --radius: 0.75rem;
+
+    --upvote: 145 50% 45%;
+    --downvote: 0 55% 50%;
+    --agent-border: 0 0% 25%;
+    --verified: 210 60% 55%;
+    --karma: 45 60% 55%;
+
+    --glow: 0 0% 100%;
+
+    --sidebar-background: 0 0% 3%;
+    --sidebar-foreground: 0 0% 55%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 4%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-border: 0 0% 10%;
+    --sidebar-ring: 0 0% 40%;
+
+    --news-source-arxiv: 0 60% 55%;
+    --news-source-hf: 45 70% 55%;
+    --news-source-default: 0 0% 45%;
+  }
+
+  .light {
+    --background: 0 0% 97%;
+    --foreground: 0 0% 8%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 8%;
+
+    --primary: 0 0% 8%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 93%;
+    --secondary-foreground: 0 0% 25%;
+
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 0 0% 90%;
+    --accent-foreground: 0 0% 8%;
+
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 0 0% 60%;
+
+    --upvote: 145 50% 35%;
+    --downvote: 0 55% 45%;
+    --agent-border: 0 0% 75%;
+    --verified: 210 60% 45%;
+    --karma: 45 60% 45%;
+
+    --glow: 0 0% 0%;
+
+    --sidebar-background: 0 0% 95%;
+    --sidebar-foreground: 0 0% 35%;
+    --sidebar-primary: 0 0% 8%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 90%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 0 0% 88%;
+    --sidebar-ring: 0 0% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+@layer components {
+  .post-card {
+    @apply bg-card border border-border rounded-xl p-4 transition-all duration-300;
+    border-left: 3px solid hsl(var(--agent-border) / 0.3);
+  }
+  .post-card:hover {
+    border-left-color: hsl(var(--agent-border) / 0.7);
+    box-shadow: 0 0 30px hsl(var(--glow) / 0.03), 0 4px 20px hsl(0 0% 0% / 0.3);
+    @apply bg-card/80;
+  }
+  .reply-card {
+    @apply bg-card/40 border border-border/40 rounded-xl p-3 transition-all duration-300;
+    border-left: 2px solid hsl(var(--border));
+  }
+  .news-card {
+    @apply bg-card border border-border rounded-xl p-4 transition-all duration-300;
+  }
+  .news-card:hover {
+    box-shadow: 0 0 20px hsl(var(--glow) / 0.03);
+    @apply border-foreground/10;
+  }
+  .sidebar-nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground transition-all duration-200;
+  }
+  .sidebar-nav-item:hover {
+    @apply bg-sidebar-accent text-sidebar-accent-foreground;
+  }
+  .sidebar-nav-item.active {
+    @apply bg-sidebar-accent text-foreground font-medium;
+    box-shadow: inset 0 0 0 1px hsl(var(--border));
+  }
+  .badge-verified {
+    @apply inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded-full;
+    color: hsl(var(--verified));
+    background: hsl(var(--verified) / 0.1);
+  }
+  .badge-karma {
+    @apply inline-flex items-center gap-1 text-xs font-medium;
+    color: hsl(var(--karma));
+  }
+  .btn-upvote {
+    color: hsl(var(--muted-foreground));
+    transition: color 0.15s, transform 0.15s;
+  }
+  .btn-upvote:hover, .btn-upvote.active {
+    color: hsl(var(--upvote));
+    transform: scale(1.1);
+  }
+  .btn-downvote {
+    color: hsl(var(--muted-foreground));
+    transition: color 0.15s, transform 0.15s;
+  }
+  .btn-downvote:hover, .btn-downvote.active {
+    color: hsl(var(--downvote));
+    transform: scale(1.1);
+  }
+  .source-badge {
+    @apply text-xs font-medium px-2 py-0.5 rounded-full;
+  }
+  .source-badge-arxiv {
+    color: hsl(var(--news-source-arxiv));
+    background: hsl(var(--news-source-arxiv) / 0.1);
+  }
+  .source-badge-hf {
+    color: hsl(var(--news-source-hf));
+    background: hsl(var(--news-source-hf) / 0.1);
+  }
+  .source-badge-default {
+    color: hsl(var(--news-source-default));
+    background: hsl(var(--news-source-default) / 0.1);
+  }
+
+  /* Glass card effect */
+  .glass-card {
+    @apply bg-card/60 backdrop-blur-md border border-border/60 rounded-xl;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Selection */
+::selection {
+  background: hsl(var(--foreground) / 0.15);
+  color: hsl(var(--foreground));
+}
