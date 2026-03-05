@@ -1,0 +1,70 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
+import express from 'express';
+import cors from 'cors';
+import { authenticate, requireRole } from './middleware/auth';
+import { errorHandler } from './middleware/errorHandler';
+
+// Route imports
+import authRoutes from './routes/auth';
+import agentRoutes from './routes/agents';
+import postRoutes from './routes/posts';
+import newsRoutes from './routes/news';
+import sourceRoutes from './routes/sources';
+import reportRoutes from './routes/reports';
+import activityRoutes from './routes/activity';
+
+const app = express();
+const PORT = Number(process.env.PORT) || 3001;
+
+// ── Middleware ───────────────────────────────────────────────────────────────
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim());
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (Postman, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+      return callback(null, true);
+    }
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
+  credentials: true,
+}));
+app.use(express.json({ limit: '10mb' }));
+
+// ── Health check ────────────────────────────────────────────────────────────
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ── Public routes (no JWT required) ─────────────────────────────────────────
+app.use('/api/auth', authRoutes);
+
+// ── Protected routes (JWT required) ─────────────────────────────────────────
+app.use('/api/agents', authenticate, agentRoutes);
+app.use('/api/posts', authenticate, postRoutes);
+app.use('/api/news', authenticate, newsRoutes);
+app.use('/api/sources', authenticate, sourceRoutes);
+app.use('/api/reports', authenticate, reportRoutes);
+app.use('/api/activity', authenticate, requireRole('admin'), activityRoutes);
+
+// ── 404 handler ─────────────────────────────────────────────────────────────
+app.use((_req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
+// ── Global error handler ────────────────────────────────────────────────────
+app.use(errorHandler);
+
+// ── Start server ────────────────────────────────────────────────────────────
+app.listen(PORT, () => {
+  console.log(`🚀 Observatory API running on http://localhost:${PORT}`);
+  console.log(`   Health check: http://localhost:${PORT}/api/health`);
+});
+
+export default app;
+

@@ -1,9 +1,12 @@
 import { AppLayout } from "@/components/AppLayout";
-import { Sun, Moon, User, Eye } from "lucide-react";
+import { Sun, Moon, User, Eye, LogOut } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
 
 const ProfilePage = () => {
   const { isDark, toggle } = useTheme();
+  const { user, logout } = useAuth();
 
   return (
     <AppLayout>
@@ -14,9 +17,12 @@ const ProfilePage = () => {
             <User size={36} className="text-muted-foreground" />
           </div>
           <div className="text-center">
-            <h1 className="text-xl font-heading font-bold text-foreground">Observer</h1>
+            <h1 className="text-xl font-heading font-bold text-foreground">
+              {user?.name || "Observer"}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{user?.email}</p>
             <p className="text-sm text-muted-foreground flex items-center justify-center gap-1 mt-1">
-              <Eye size={14} /> View-only mode
+              <Eye size={14} /> {user?.role === "admin" ? "Admin" : "View-only mode"}
             </p>
           </div>
         </div>
@@ -38,6 +44,14 @@ const ProfilePage = () => {
               {isDark ? "Dark" : "Light"}
             </span>
           </button>
+        </div>
+
+        {/* Logout */}
+        <div className="pt-4">
+          <Button variant="outline" className="w-full gap-2" onClick={logout}>
+            <LogOut size={16} />
+            Sign out
+          </Button>
         </div>
 
         <p className="text-xs text-muted-foreground text-center">
