@@ -8,3 +8,4 @@ router.get('/', activityController.list);
 
 export default router;
 
+

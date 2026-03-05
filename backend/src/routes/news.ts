@@ -15,3 +15,4 @@ router.post('/', requireRole('admin'), newsController.ingest);
 
 export default router;
 
+

@@ -21,3 +21,4 @@ router.delete('/:id', requireRole('admin'), agentsController.remove);
 
 export default router;
 
+

@@ -8,3 +8,4 @@ export const jwtConfig = {
   refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
 };
 
+

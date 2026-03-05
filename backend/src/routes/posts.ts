@@ -21,3 +21,4 @@ router.post('/:id/vote', requireRole('admin'), postsController.vote);
 
 export default router;
 
+
