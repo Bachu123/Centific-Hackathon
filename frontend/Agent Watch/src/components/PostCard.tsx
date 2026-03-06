@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronUp, ChevronDown, MessageSquare, Bot } from "lucide-react";
+import { ChevronUp, ChevronDown, MessageSquare, Bot, Newspaper, ChevronRight } from "lucide-react";
 import { Post } from "@/types";
 import { AgentAvatar, AgentName } from "./AgentIdentity";
 import { timeAgo } from "@/lib/time";
@@ -64,6 +64,20 @@ export function PostCard({
               </Tooltip>
             </div>
 
+            {/* News source reference */}
+            {post.news_title && !isReply && (
+              <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground/70 bg-muted/40 rounded px-2 py-1 border border-border/50">
+                <Newspaper size={11} className="shrink-0" />
+                <span className="truncate">
+                  {post.news_source && (
+                    <span className="font-medium text-muted-foreground">{post.news_source}</span>
+                  )}
+                  {post.news_source && <ChevronRight size={10} className="inline mx-0.5" />}
+                  {post.news_title}
+                </span>
+              </div>
+            )}
+
             {/* Body */}
             <div className="mt-2 text-sm leading-relaxed whitespace-pre-wrap text-card-foreground">
               {post.body}
@@ -99,26 +113,29 @@ export function PostCard({
                 </button>
               </div>
 
-              {directReplies.length > 0 && (
+              {(post.reply_count > 0 || directReplies.length > 0) && (
                 <button
                   onClick={() => onToggleThread?.(post.id)}
-                  className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                  className={`flex items-center gap-1 transition-colors ${
+                    isExpanded
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
                 >
                   <MessageSquare size={14} />
-                  <span>{directReplies.length} {directReplies.length === 1 ? "reply" : "replies"}</span>
+                  <span>
+                    {directReplies.length > 0
+                      ? `${directReplies.length} ${directReplies.length === 1 ? "reply" : "replies"}`
+                      : `${post.reply_count} ${post.reply_count === 1 ? "reply" : "replies"}`}
+                  </span>
                 </button>
               )}
 
-              {directReplies.length === 0 && !isReply && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors cursor-default">
-                      <MessageSquare size={14} />
-                      <span>Reply</span>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>Only agents can reply</TooltipContent>
-                </Tooltip>
+              {post.reply_count === 0 && directReplies.length === 0 && !isReply && (
+                <span className="flex items-center gap-1 text-muted-foreground/40">
+                  <MessageSquare size={14} />
+                  <span>Reply</span>
+                </span>
               )}
             </div>
           </div>
@@ -126,18 +143,22 @@ export function PostCard({
       </div>
 
       {/* Nested replies */}
-      {isExpanded && depth < 3 && directReplies.length > 0 && (
+      {isExpanded && depth < 3 && (
         <div className="mt-2 space-y-2">
-          {directReplies.map((reply) => (
-            <PostCard
-              key={reply.id}
-              post={reply}
-              allPosts={allPosts}
-              depth={depth + 1}
-              onToggleThread={onToggleThread}
-              expandedThreads={expandedThreads}
-            />
-          ))}
+          {directReplies.length > 0 ? (
+            directReplies.map((reply) => (
+              <PostCard
+                key={reply.id}
+                post={reply}
+                allPosts={allPosts}
+                depth={depth + 1}
+                onToggleThread={onToggleThread}
+                expandedThreads={expandedThreads}
+              />
+            ))
+          ) : (
+            <div className="ml-4 md:ml-8 py-2 text-xs text-muted-foreground/50 animate-pulse">Loading replies...</div>
+          )}
         </div>
       )}
     </div>

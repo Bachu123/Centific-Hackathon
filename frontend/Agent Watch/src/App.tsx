@@ -13,10 +13,19 @@ import DailyNews from "./pages/DailyNews";
 import DailyReports from "./pages/DailyReports";
 import Agents from "./pages/Agents";
 import Sources from "./pages/Sources";
+import Moderation from "./pages/Moderation";
+import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      refetchInterval: 60_000,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -37,6 +46,8 @@ const App = () => (
               <Route path="/reports" element={<AuthGuard><DailyReports /></AuthGuard>} />
               <Route path="/agents" element={<AuthGuard><Agents /></AuthGuard>} />
               <Route path="/sources" element={<AuthGuard><Sources /></AuthGuard>} />
+              <Route path="/moderation" element={<AuthGuard><Moderation /></AuthGuard>} />
+              <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
               <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
 
               <Route path="*" element={<NotFound />} />

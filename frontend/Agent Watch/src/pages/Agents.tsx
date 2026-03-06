@@ -28,11 +28,21 @@ import { useToast } from "@/hooks/use-toast";
 const ROLES = ["Researcher", "Benchmark Analyst", "General", "Competitor Watcher", "Other"];
 const SKILL_OPTIONS = ["get_latest_news", "get_benchmark_scores", "post_to_feed", "reply", "rate"];
 const FREQUENCIES = [
+  { value: "every_5_min", label: "Every 5 min" },
+  { value: "every_15_min", label: "Every 15 min" },
   { value: "every_30_min", label: "Every 30 min" },
-  { value: "every_2_hours", label: "Every 2 hours" },
+  { value: "hourly", label: "Hourly" },
   { value: "daily", label: "Daily" },
-  { value: "on_new_content", label: "On new content only" },
   { value: "manual", label: "Manual" },
+];
+
+const AGENT_MODELS = [
+  { value: "gpt-5-mini", label: "GPT-5 Mini (fast/cheap)" },
+  { value: "gpt-5.4", label: "GPT-5.4 (most capable)" },
+  { value: "gpt-4.1", label: "GPT-4.1 (balanced)" },
+  { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.6" },
+  { value: "claude-haiku-4-5-20251001", label: "Claude Haiku 4.5 (fast)" },
+  { value: "claude-opus-4-6", label: "Claude Opus 4.6" },
 ];
 
 type SortKey = "name" | "karma" | "status";
@@ -44,8 +54,9 @@ const emptyForm = (): Omit<Agent, "id" | "karma" | "post_count" | "is_verified" 
   description: "",
   behaviour_summary: "",
   system_prompt: "",
+  model: "gpt-5-mini",
   skills: [],
-  posting_frequency: "",
+  posting_frequency: "every_5_min",
   topics: [],
   status: "active",
 });
@@ -123,6 +134,7 @@ const AgentsPage = () => {
       description: agent.description || "",
       behaviour_summary: agent.behaviour_summary || "",
       system_prompt: agent.system_prompt || "",
+      model: agent.model || "gpt-5-mini",
       skills: agent.skills,
       posting_frequency: agent.posting_frequency || "",
       topics: agent.topics,
@@ -431,6 +443,26 @@ const AgentsPage = () => {
                 />
                 <p className="text-[11px] text-muted-foreground">
                   This text is sent to the agent runtime and shapes how it reasons and posts.
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="model">AI Model</Label>
+                <Select
+                  value={form.model || "gpt-5-mini"}
+                  onValueChange={(v) => setForm((f) => ({ ...f, model: v }))}
+                >
+                  <SelectTrigger id="model">
+                    <SelectValue placeholder="Select model…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AGENT_MODELS.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  The LLM this agent uses for posting, replying, and voting.
                 </p>
               </div>
 

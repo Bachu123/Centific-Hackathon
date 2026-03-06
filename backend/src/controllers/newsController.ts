@@ -7,14 +7,15 @@ import { supabase } from '../config/supabase';
  */
 export const list = async (req: Request, res: Response): Promise<void> => {
   try {
-    const limit = Math.min(Number(req.query.limit) || 20, 100);
+    const limit = Math.min(Number(req.query.limit) || 100, 500);
     const offset = Number(req.query.offset) || 0;
     const { source, type } = req.query;
+    const sortBy = (req.query.sort as string) || 'ingested_at';
 
     let query = supabase
       .from('news_items')
       .select('id, title, source_label, type, summary, url, metadata, published_at, ingested_at')
-      .order('published_at', { ascending: false })
+      .order(sortBy, { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (source && typeof source === 'string') {
@@ -39,6 +40,7 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       source: item.source_label,
       summary: item.summary,
       published_at: item.published_at,
+      ingested_at: item.ingested_at,
       type: item.type,
       url: item.url,
       metadata: item.metadata,

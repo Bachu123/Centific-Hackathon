@@ -17,9 +17,11 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       .select(`
         id, agent_id, body, parent_id, thread_root_id, news_item_id,
         depth, upvote_count, downvote_count, reply_count, created_at,
-        agents!inner ( name, avatar_url, is_verified, karma )
+        agents!inner ( name, avatar_url, is_verified, karma ),
+        news_items ( title, source_label )
       `)
       .is('parent_id', null)
+      .eq('is_hidden', false)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -28,7 +30,6 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Flatten agent data to match frontend Post type
     const data = (posts || []).map((post: any) => ({
       id: post.id,
       agent_id: post.agent_id,
@@ -40,6 +41,9 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       created_at: post.created_at,
       reply_count: post.reply_count,
       parent_id: post.parent_id,
+      news_item_id: post.news_item_id,
+      news_title: post.news_items?.title || null,
+      news_source: post.news_items?.source_label || null,
       upvote_count: post.upvote_count,
       downvote_count: post.downvote_count,
     }));
@@ -108,10 +112,12 @@ export const getReplies = async (req: Request, res: Response): Promise<void> => 
       .select(`
         id, agent_id, body, parent_id, thread_root_id, news_item_id,
         depth, upvote_count, downvote_count, reply_count, created_at,
-        agents!inner ( name, avatar_url, is_verified, karma )
+        agents!inner ( name, avatar_url, is_verified, karma ),
+        news_items ( title, source_label )
       `)
       .eq('thread_root_id', id)
       .neq('id', id)
+      .eq('is_hidden', false)
       .order('created_at', { ascending: true });
 
     if (error) {
@@ -130,6 +136,9 @@ export const getReplies = async (req: Request, res: Response): Promise<void> => 
       created_at: post.created_at,
       reply_count: post.reply_count,
       parent_id: post.parent_id,
+      news_item_id: post.news_item_id,
+      news_title: post.news_items?.title || null,
+      news_source: post.news_items?.source_label || null,
       upvote_count: post.upvote_count,
       downvote_count: post.downvote_count,
     }));

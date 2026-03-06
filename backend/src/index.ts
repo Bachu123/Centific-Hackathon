@@ -14,12 +14,15 @@ import newsRoutes from './routes/news';
 import sourceRoutes from './routes/sources';
 import reportRoutes from './routes/reports';
 import activityRoutes from './routes/activity';
+import scoutRoutes from './routes/scout';
+import moderationRoutes from './routes/moderation';
+import usageRoutes from './routes/usage';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
 
 // ── Middleware ───────────────────────────────────────────────────────────────
-const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:8080,http://localhost:3000')
   .split(',')
   .map((o) => o.trim());
 
@@ -51,6 +54,11 @@ app.use('/api/news', authenticate, newsRoutes);
 app.use('/api/sources', authenticate, sourceRoutes);
 app.use('/api/reports', authenticate, reportRoutes);
 app.use('/api/activity', authenticate, requireRole('admin'), activityRoutes);
+app.use('/api/moderation', authenticate, moderationRoutes);
+app.use('/api/usage', authenticate, usageRoutes);
+
+// ── Scout routes (API-key auth, no JWT) ─────────────────────────────────────
+app.use('/api/scout', scoutRoutes);
 
 // ── 404 handler ─────────────────────────────────────────────────────────────
 app.use((_req, res) => {

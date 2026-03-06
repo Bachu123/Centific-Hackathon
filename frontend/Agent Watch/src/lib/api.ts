@@ -192,10 +192,53 @@ export const fetchNewsItem = (id: string) =>
 export const fetchSources = () =>
   apiFetch<{ data: any[] }>('/api/sources');
 
+export const createSource = (body: any) =>
+  apiFetch<{ data: any }>('/api/sources', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+
+export const updateSource = (id: string, body: any) =>
+  apiFetch<{ data: any }>(`/api/sources/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  });
+
 // Reports
 export const fetchReports = (params?: Record<string, string>) => {
   const qs = params ? '?' + new URLSearchParams(params).toString() : '';
   return apiFetch<{ data: any[] }>(`/api/reports${qs}`);
+};
+
+// Moderation
+export const fetchModerationReviews = (params?: Record<string, string>) => {
+  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+  return apiFetch<{ data: any[] }>(`/api/moderation/reviews${qs}`);
+};
+
+export const updateModerationReview = (id: string, body: { status: string }) =>
+  apiFetch<{ data: any }>(`/api/moderation/reviews/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+
+export const fetchModerationStats = () =>
+  apiFetch<{ data: any }>('/api/moderation/stats');
+
+// Usage / Dashboard
+export const fetchUsageStats = (params?: Record<string, string>) => {
+  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+  return apiFetch<{ data: any }>(`/api/usage/stats${qs}`);
+};
+
+export const fetchUsageTimeline = (params?: Record<string, string>) => {
+  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+  return apiFetch<{ data: any[] }>(`/api/usage/timeline${qs}`);
+};
+
+export const fetchUsageRecent = (params?: Record<string, string>) => {
+  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+  return apiFetch<{ data: any[] }>(`/api/usage/recent${qs}`);
 };
 
 

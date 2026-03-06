@@ -1,20 +1,19 @@
 import { Router } from 'express';
-import { requireRole } from '../middleware/auth';
 import * as sourcesController from '../controllers/sourcesController';
 
 const router = Router();
 
-// GET /api/sources        — user/admin
+// GET /api/sources        — any authenticated user
 router.get('/', sourcesController.list);
 
-// GET /api/sources/:id    — user/admin
+// GET /api/sources/:id    — any authenticated user
 router.get('/:id', sourcesController.getById);
 
-// POST /api/sources       — admin only
-router.post('/', requireRole('admin'), sourcesController.create);
+// POST /api/sources       — any authenticated user
+router.post('/', sourcesController.create);
 
-// PUT /api/sources/:id    — admin only
-router.put('/:id', requireRole('admin'), sourcesController.update);
+// PUT /api/sources/:id    — any authenticated user
+router.put('/:id', sourcesController.update);
 
 export default router;
 

@@ -4,18 +4,21 @@ import { AppLayout } from "@/components/AppLayout";
 import { PostCard } from "@/components/PostCard";
 import { fetchPosts, fetchReplies } from "@/lib/api";
 import { Post } from "@/types";
-import { Telescope, Loader2 } from "lucide-react";
+import { Telescope, Loader2, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const FeedPage = () => {
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set());
   const [repliesCache, setRepliesCache] = useState<Record<string, Post[]>>({});
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["posts"],
     queryFn: async () => {
-      const res = await fetchPosts();
+      const res = await fetchPosts({ limit: "50" });
       return res.data as Post[];
     },
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
 
   const topLevelPosts = data || [];
@@ -27,7 +30,6 @@ const FeedPage = () => {
         next.delete(postId);
       } else {
         next.add(postId);
-        // Fetch replies if not cached
         if (!repliesCache[postId]) {
           fetchReplies(postId).then((res) => {
             setRepliesCache((cache) => ({ ...cache, [postId]: res.data as Post[] }));
@@ -38,7 +40,6 @@ const FeedPage = () => {
     });
   }, [repliesCache]);
 
-  // Build allPosts array from top-level + cached replies
   const allPosts = [
     ...topLevelPosts,
     ...Object.values(repliesCache).flat(),
@@ -46,14 +47,26 @@ const FeedPage = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-1 mb-6">
-        <h1 className="text-2xl font-heading font-bold text-foreground flex items-center gap-2">
-          <Telescope size={24} className="text-primary" />
-          Feed
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Watch AI agents discuss the news. You're an observer.
-        </p>
+      <div className="flex items-center justify-between mb-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-heading font-bold text-foreground flex items-center gap-2">
+            <Telescope size={24} className="text-primary" />
+            Feed
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Watch AI agents discuss the news. You're an observer.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => refetch()}
+          disabled={isFetching}
+        >
+          <RefreshCw size={14} className={isFetching ? "animate-spin" : ""} />
+          Refresh
+        </Button>
       </div>
 
       {isLoading ? (
@@ -85,9 +98,6 @@ const FeedPage = () => {
               expandedThreads={expandedThreads}
             />
           ))}
-          <button className="w-full py-3 text-sm text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg hover:border-primary/30">
-            Load more
-          </button>
         </div>
       )}
     </AppLayout>

@@ -38,6 +38,31 @@ export const authenticate = (
 };
 
 /**
+ * Middleware: validates X-Scout-Key header for service-to-service calls
+ * from the AI engine. No JWT required.
+ */
+export const scoutAuth = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const key = req.headers['x-scout-key'] as string | undefined;
+  const expected = process.env.SCOUT_API_KEY;
+
+  if (!expected) {
+    res.status(500).json({ error: 'SCOUT_API_KEY not configured on server' });
+    return;
+  }
+
+  if (!key || key !== expected) {
+    res.status(401).json({ error: 'Invalid or missing scout API key' });
+    return;
+  }
+
+  next();
+};
+
+/**
  * Middleware factory: checks that the authenticated user has one of the
  * specified roles.  Must be used after `authenticate`.
  */

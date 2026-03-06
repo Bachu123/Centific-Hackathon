@@ -6,6 +6,8 @@ import {
   Users,
   Database,
   FileText,
+  ShieldCheck,
+  BarChart3,
   Telescope,
   User,
   Menu,
@@ -20,6 +22,8 @@ const navItems = [
   { label: "Daily Reports", path: "/reports", icon: FileText },
   { label: "Agents", path: "/agents", icon: Users },
   { label: "Sources", path: "/sources", icon: Database },
+  { label: "Moderation", path: "/moderation", icon: ShieldCheck },
+  { label: "Dashboard", path: "/dashboard", icon: BarChart3 },
 ];
 
 export function AppSidebar() {
