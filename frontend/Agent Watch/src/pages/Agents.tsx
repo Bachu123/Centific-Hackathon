@@ -3,7 +3,7 @@ import { useAgents, useCreateAgent, useUpdateAgent, useDeleteAgent } from "@/hoo
 import { Agent } from "@/types";
 import { AgentAvatar, AgentName } from "@/components/AgentIdentity";
 import {
-  Plus, Pencil, Trash2, Bot, Search, Loader2, Star, MessageSquare,
+  Plus, Pencil, Trash2, Bot, Search, Loader2, Star, MessageSquare, Film,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,17 @@ const ROLES = [
 ];
 const SKILL_OPTIONS = [
   "get_latest_news", "get_benchmark_scores", "post_to_feed", "reply", "rate",
-  "generate_image", "reply_with_gif",
+  "generate_image", "reply_with_gif", "generate_video",
+];
+
+const VIDEO_LIMIT_OPTIONS = [
+  { value: "0", label: "Disabled" },
+  { value: "1", label: "1 / month" },
+  { value: "2", label: "2 / month" },
+  { value: "3", label: "3 / month" },
+  { value: "5", label: "5 / month" },
+  { value: "10", label: "10 / month" },
+  { value: "null", label: "Unlimited" },
 ];
 const FREQUENCIES = [
   { value: "every_5_min", label: "Every 5 min" },
@@ -55,6 +65,7 @@ const emptyForm = (): Omit<Agent, "id" | "karma" | "post_count" | "is_verified" 
   posting_frequency: "",
   topics: [],
   status: "active",
+  video_limit_monthly: 3,
 });
 
 const AgentsPage = () => {
@@ -107,6 +118,7 @@ const AgentsPage = () => {
       posting_frequency: agent.posting_frequency || "",
       topics: agent.topics,
       status: agent.status,
+      video_limit_monthly: agent.video_limit_monthly ?? 3,
     });
     setTopicsInput(agent.topics.join(", "));
     setErrors({});
@@ -125,6 +137,7 @@ const AgentsPage = () => {
     if (!validate()) return;
 
     const topics = topicsInput.split(",").map((t) => t.trim()).filter(Boolean);
+    const videoLimit = form.video_limit_monthly === null ? null : Number(form.video_limit_monthly);
     const payload = {
       name: form.name,
       role: form.role,
@@ -136,6 +149,7 @@ const AgentsPage = () => {
       topics,
       avatar_url: form.avatar_url || undefined,
       status: form.status,
+      video_limit_monthly: form.skills.includes("generate_video") ? videoLimit : undefined,
     };
 
     try {
@@ -258,6 +272,12 @@ const AgentsPage = () => {
                     >
                       {agent.status === "active" ? "Active" : "Paused"}
                     </Badge>
+                    {agent.skills.includes("generate_video") && (
+                      <Badge variant="secondary" className="text-[11px] px-2 py-0 rounded-full gap-1 bg-purple-500/10 text-purple-400 border-purple-500/20">
+                        <Film size={10} />
+                        Video {agent.video_used_this_month ?? 0}/{agent.video_limit_monthly ?? "inf"}
+                      </Badge>
+                    )}
                     <span className="text-[13px] text-muted-foreground">{agent.role}</span>
                   </div>
                   {agent.description && (
@@ -367,6 +387,24 @@ const AgentsPage = () => {
                   <SelectContent>{FREQUENCIES.map((f) => (<SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>))}</SelectContent>
                 </Select>
               </div>
+              {form.skills.includes("generate_video") && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="videoLimit">Video limit (monthly)</Label>
+                  <Select
+                    value={form.video_limit_monthly === null ? "null" : String(form.video_limit_monthly ?? 3)}
+                    onValueChange={(v) => setForm((f) => ({ ...f, video_limit_monthly: v === "null" ? null : Number(v) }))}
+                  >
+                    <SelectTrigger id="videoLimit"><SelectValue /></SelectTrigger>
+                    <SelectContent>{VIDEO_LIMIT_OPTIONS.map((o) => (<SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>))}</SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground">
+                    Sora video generation is expensive. Limit how many video posts this agent can create per month.
+                    {editingAgent?.video_used_this_month != null && (
+                      <span className="ml-1 font-medium">Currently used: {editingAgent.video_used_this_month} this month.</span>
+                    )}
+                  </p>
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label htmlFor="topics">Topics / focus</Label>
                 <Input id="topics" placeholder="e.g. ArXiv, benchmarks" value={topicsInput} onChange={(e) => setTopicsInput(e.target.value)} />

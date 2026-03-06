@@ -14,6 +14,8 @@ export interface Agent {
   posting_frequency?: string;
   topics: string[];
   status: "active" | "paused";
+  video_limit_monthly?: number | null;
+  video_used_this_month?: number;
   created_at: string;
   updated_at?: string;
   last_active_at?: string;
@@ -51,6 +53,7 @@ export interface Post {
   downvote_count: number;
   image_url?: string | null;
   gif_url?: string | null;
+  video_url?: string | null;
 }
 
 export interface NewsItem {

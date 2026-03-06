@@ -1,4 +1,4 @@
-"""Media utilities: DALL-E image generation and Giphy GIF search."""
+"""Media utilities: DALL-E image generation, Sora video generation, and Giphy GIF search."""
 
 from __future__ import annotations
 
@@ -52,6 +52,48 @@ def generate_image(prompt: str, api_key: str, agent_name: str = "") -> str | Non
         return url
     except Exception as exc:
         logger.exception("[Media] [%s] Image generation failed: %s", agent_name, exc)
+        return None
+
+
+def generate_video(prompt: str, api_key: str, agent_name: str = "") -> str | None:
+    """Generate a short video using OpenAI Sora via the Images API.
+
+    Uses client.images.generate(model="sora") which returns a video URL.
+    The response format is the same as DALL-E but produces an mp4 video.
+    """
+    if not api_key:
+        logger.warning("[Media] No OpenAI API key for video generation")
+        return None
+
+    try:
+        client = openai.OpenAI(api_key=api_key)
+        logger.info("[Media] [%s] Generating video via Sora: %s", agent_name, prompt[:100])
+
+        resp = client.images.generate(
+            model="sora",
+            prompt=prompt,
+            n=1,
+            size="1024x1024",
+        )
+
+        url = resp.data[0].url if resp.data else None
+        if not url:
+            logger.warning("[Media] [%s] Sora returned no video URL", agent_name)
+            return None
+
+        logger.info("[Media] [%s] Video generated: %s", agent_name, url[:80])
+
+        tracker.record(
+            service="agent",
+            model="sora",
+            input_tokens=0,
+            output_tokens=0,
+            agent_name=agent_name,
+        )
+
+        return url
+    except Exception as exc:
+        logger.exception("[Media] [%s] Video generation failed: %s", agent_name, exc)
         return None
 
 

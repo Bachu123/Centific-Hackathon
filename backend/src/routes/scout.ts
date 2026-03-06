@@ -277,10 +277,77 @@ router.get('/recent-posts', scoutAuth, async (_req: Request, res: Response): Pro
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
+/** POST /api/scout/agents/:id/check-video-quota -- check & decrement monthly video quota */
+router.post('/agents/:id/check-video-quota', scoutAuth, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabase.rpc('check_and_use_video_quota', { p_agent_id: id });
+    if (error) {
+      // Fallback: manual check if RPC not deployed yet
+      const { data: agent } = await supabase
+        .from('agents')
+        .select('video_limit_monthly, video_used_this_month, video_limit_reset_at')
+        .eq('id', id)
+        .single();
+
+      if (!agent) { res.json({ allowed: false }); return; }
+
+      const limit = agent.video_limit_monthly;
+      let used = agent.video_used_this_month || 0;
+
+      // NULL limit = unlimited
+      if (limit === null) {
+        await supabase.from('agents').update({ video_used_this_month: used + 1 }).eq('id', id);
+        res.json({ allowed: true, used: used + 1, limit: null });
+        return;
+      }
+      // 0 = disabled
+      if (limit === 0) { res.json({ allowed: false, used, limit: 0 }); return; }
+
+      // Reset if new month
+      const resetAt = new Date(agent.video_limit_reset_at || 0);
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+      if (resetAt < monthStart) {
+        used = 0;
+        await supabase.from('agents').update({
+          video_used_this_month: 0,
+          video_limit_reset_at: new Date().toISOString(),
+        }).eq('id', id);
+      }
+
+      if (used >= limit) {
+        res.json({ allowed: false, used, limit });
+        return;
+      }
+
+      await supabase.from('agents').update({ video_used_this_month: used + 1 }).eq('id', id);
+      res.json({ allowed: true, used: used + 1, limit });
+      return;
+    }
+
+    res.json({ allowed: !!data });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+/** GET /api/scout/agents/:id/video-usage -- get current video usage stats */
+router.get('/agents/:id/video-usage', scoutAuth, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { data, error } = await supabase
+      .from('agents')
+      .select('video_limit_monthly, video_used_this_month, video_limit_reset_at')
+      .eq('id', req.params.id)
+      .single();
+    if (error || !data) { res.status(404).json({ error: 'Agent not found' }); return; }
+    res.json({ data });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 /** POST /api/scout/agent-post -- create post on behalf of agent (no rate limit) */
 router.post('/agent-post', scoutAuth, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { agent_id, body, parent_id, news_item_id, image_url, gif_url } = req.body;
+    const { agent_id, body, parent_id, news_item_id, image_url, gif_url, video_url } = req.body;
     if (!agent_id || !body) {
       res.status(400).json({ error: 'agent_id and body are required' });
       return;
@@ -291,8 +358,9 @@ router.post('/agent-post', scoutAuth, async (req: Request, res: Response): Promi
     if (news_item_id) row.news_item_id = news_item_id;
     if (image_url) row.image_url = image_url;
     if (gif_url) row.gif_url = gif_url;
+    if (video_url) row.video_url = video_url;
 
-    const { data, error } = await supabase.from('posts').insert(row).select('id, body, image_url, gif_url').single();
+    const { data, error } = await supabase.from('posts').insert(row).select('id, body, image_url, gif_url, video_url').single();
     if (error) { res.status(500).json({ error: 'Failed to create post', detail: error.message }); return; }
     res.status(201).json({ data });
   } catch (err: any) { res.status(500).json({ error: err.message }); }

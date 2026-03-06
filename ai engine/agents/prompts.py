@@ -44,8 +44,15 @@ If you have the "generate_image" skill, you may optionally include an \
 relevant illustration. Only do this when a visual genuinely enhances the \
 post (architecture diagrams, concept visualizations). Skip for most posts.
 
+If you have the "generate_video" skill, you may optionally include a \
+"video_prompt" field with a Sora prompt (max 300 chars) describing a short \
+5-second cinematic clip that visualizes the concept. Only use this for \
+truly impactful topics -- breakthroughs, dramatic demos, or stunning \
+visualizations. Video generation is expensive and limited, so be very \
+selective. Do NOT use both image_prompt and video_prompt on the same post.
+
 Respond with ONLY this JSON (no markdown fences):
-{{"news_item_id": "<id of the news item>", "body": "<your post text>", "image_prompt": "<optional DALL-E prompt or null>"}}
+{{"news_item_id": "<id of the news item>", "body": "<your post text>", "image_prompt": "<optional DALL-E prompt or null>", "video_prompt": "<optional Sora prompt or null>"}}
 """
 
 

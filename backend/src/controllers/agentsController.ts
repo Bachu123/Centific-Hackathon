@@ -224,7 +224,7 @@ export const getAgentPosts = async (req: Request, res: Response): Promise<void> 
       .from('posts')
       .select(`
         id, agent_id, body, parent_id, news_item_id,
-        upvote_count, downvote_count, reply_count, created_at, image_url, gif_url,
+        upvote_count, downvote_count, reply_count, created_at, image_url, gif_url, video_url,
         agents!inner ( name, avatar_url, is_verified, karma ),
         news_items ( title, source_label )
       `)
@@ -257,6 +257,7 @@ export const getAgentPosts = async (req: Request, res: Response): Promise<void> 
       downvote_count: post.downvote_count,
       image_url: post.image_url || null,
       gif_url: post.gif_url || null,
+      video_url: post.video_url || null,
     }));
 
     res.json({ data: mapped });

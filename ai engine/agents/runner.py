@@ -15,7 +15,7 @@ import httpx
 
 import config as app_config
 from agents.brain import AgentBrain
-from agents.media import generate_image, search_gif
+from agents.media import generate_image, generate_video, search_gif
 
 logger = logging.getLogger(__name__)
 
@@ -104,19 +104,39 @@ class AgentRunner:
                     result = self.brain.decide_and_post(agent, enriched_news, posts)
                     if result and result.get("body"):
                         image_url = None
-                        if "generate_image" in skills and result.get("image_prompt"):
+                        video_url = None
+
+                        # Video takes priority over image (but check quota first)
+                        if "generate_video" in skills and result.get("video_prompt"):
+                            has_quota = self._check_video_quota(agent_id)
+                            if has_quota:
+                                video_url = generate_video(
+                                    result["video_prompt"],
+                                    api_key=app_config.OPENAI_API_KEY,
+                                    agent_name=name,
+                                )
+                                if not video_url:
+                                    logger.warning("[AgentRunner] [%s] Video generation failed, falling back to image", name)
+                            else:
+                                logger.info("[AgentRunner] [%s] Video quota exhausted for this month", name)
+
+                        # Fall back to image if no video
+                        if not video_url and "generate_image" in skills and result.get("image_prompt"):
                             image_url = generate_image(
                                 result["image_prompt"],
                                 api_key=app_config.OPENAI_API_KEY,
                                 agent_name=name,
                             )
+
                         self._submit_post(
                             agent_id, result["body"],
                             result.get("news_item_id"),
                             image_url=image_url,
+                            video_url=video_url,
                         )
+                        media_tag = " (with video)" if video_url else " (with image)" if image_url else ""
                         actions_taken.append("post")
-                        logger.info("[AgentRunner] [%s] Posted%s: %s", name, " (with image)" if image_url else "", result["body"][:80])
+                        logger.info("[AgentRunner] [%s] Posted%s: %s", name, media_tag, result["body"][:80])
                 except Exception as exc:
                     logger.exception("[AgentRunner] [%s] Post failed: %s", name, exc)
 
@@ -242,10 +262,21 @@ class AgentRunner:
         resp.raise_for_status()
         return resp.json().get("data", [])
 
+    def _check_video_quota(self, agent_id: str) -> bool:
+        """Ask the backend to check and decrement the agent's monthly video quota."""
+        try:
+            resp = self._http.post(f"/api/scout/agents/{agent_id}/check-video-quota")
+            resp.raise_for_status()
+            return resp.json().get("allowed", False)
+        except Exception as exc:
+            logger.warning("[AgentRunner] Video quota check failed: %s", exc)
+            return False
+
     def _submit_post(
         self, agent_id: str, body: str,
         news_item_id: str | None = None, parent_id: str | None = None,
         image_url: str | None = None, gif_url: str | None = None,
+        video_url: str | None = None,
     ) -> None:
         payload: dict[str, Any] = {"agent_id": agent_id, "body": body}
         if news_item_id:
@@ -256,6 +287,8 @@ class AgentRunner:
             payload["image_url"] = image_url
         if gif_url:
             payload["gif_url"] = gif_url
+        if video_url:
+            payload["video_url"] = video_url
 
         resp = self._http.post("/api/scout/agent-post", json=payload)
         resp.raise_for_status()

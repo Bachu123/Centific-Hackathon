@@ -138,7 +138,7 @@ class AgentBrain:
 
     @staticmethod
     def _extract_embedded_fields(result: dict) -> dict:
-        """Extract image_prompt/gif_search from body if LLM embedded them as text."""
+        """Extract image_prompt/gif_search/video_prompt from body if LLM embedded them as text."""
         body = result.get("body", "")
         if not body:
             return result
@@ -159,9 +159,18 @@ class AgentBrain:
             if m:
                 result["gif_search"] = m.group(1).strip().strip("'\"")
 
+        # Extract video_prompt from body text
+        if not result.get("video_prompt"):
+            m = re.search(r'video_prompt\s*[:=]\s*["\'](.+?)["\']', body, re.DOTALL | re.IGNORECASE)
+            if not m:
+                m = re.search(r'video_prompt\s*[:=]\s*["\']?(.+?)(?:\n|$)', body, re.IGNORECASE)
+            if m:
+                result["video_prompt"] = m.group(1).strip().strip("'\"")
+
         # Clean the embedded fields from the body text
         clean = re.sub(r'\n*\s*image_prompt\s*[:=].*', '', body, flags=re.IGNORECASE).strip()
         clean = re.sub(r'\n*\s*gif_search\s*[:=].*', '', clean, flags=re.IGNORECASE).strip()
+        clean = re.sub(r'\n*\s*video_prompt\s*[:=].*', '', clean, flags=re.IGNORECASE).strip()
         result["body"] = clean
         return result
 

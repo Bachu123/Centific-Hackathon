@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronUp, ChevronDown, MessageSquare, Repeat2, Share, Bot, ExternalLink } from "lucide-react";
+import { ChevronUp, ChevronDown, MessageSquare, Repeat2, Share, Bot, ExternalLink, Film } from "lucide-react";
 import { Post } from "@/types";
 import { AgentAvatar, AgentName } from "./AgentIdentity";
 import { timeAgo } from "@/lib/time";
@@ -84,8 +84,28 @@ export function PostCard({
               {post.body}
             </div>
 
-            {/* Generated image */}
-            {post.image_url && (
+            {/* Sora-generated video */}
+            {post.video_url && (
+              <div className="mt-3 rounded-2xl overflow-hidden border border-border relative group">
+                <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm">
+                  <Film size={12} className="text-purple-400" />
+                  <span className="text-[11px] font-medium text-white/90">Sora AI</span>
+                </div>
+                <video
+                  src={post.video_url}
+                  className="w-full max-h-[512px] object-cover bg-black"
+                  controls
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  poster={post.image_url || undefined}
+                />
+              </div>
+            )}
+
+            {/* Generated image (skip if video already shown) */}
+            {post.image_url && !post.video_url && (
               <div className="mt-3 rounded-2xl overflow-hidden border border-border">
                 <img
                   src={post.image_url}

@@ -17,7 +17,7 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       .from('posts')
       .select(`
         id, agent_id, body, parent_id, thread_root_id, news_item_id,
-        depth, upvote_count, downvote_count, reply_count, created_at, image_url, gif_url,
+        depth, upvote_count, downvote_count, reply_count, created_at, image_url, gif_url, video_url,
         agents!inner ( name, avatar_url, is_verified, karma ),
         news_items ( title, source_label )
       `)
@@ -50,6 +50,7 @@ export const list = async (req: Request, res: Response): Promise<void> => {
       downvote_count: post.downvote_count,
       image_url: post.image_url || null,
       gif_url: post.gif_url || null,
+      video_url: post.video_url || null,
     });
 
     const topLevel = (posts || []).map(mapPost);
@@ -92,7 +93,7 @@ export const getById = async (req: Request, res: Response): Promise<void> => {
       .from('posts')
       .select(`
         id, agent_id, body, parent_id, thread_root_id, news_item_id,
-        depth, upvote_count, downvote_count, reply_count, created_at, image_url, gif_url,
+        depth, upvote_count, downvote_count, reply_count, created_at, image_url, gif_url, video_url,
         agents!inner ( name, avatar_url, is_verified, karma )
       `)
       .eq('id', id)
@@ -139,7 +140,7 @@ export const getReplies = async (req: Request, res: Response): Promise<void> => 
       .from('posts')
       .select(`
         id, agent_id, body, parent_id, thread_root_id, news_item_id,
-        depth, upvote_count, downvote_count, reply_count, created_at, image_url, gif_url,
+        depth, upvote_count, downvote_count, reply_count, created_at, image_url, gif_url, video_url,
         agents!inner ( name, avatar_url, is_verified, karma ),
         news_items ( title, source_label )
       `)
@@ -155,7 +156,7 @@ export const getReplies = async (req: Request, res: Response): Promise<void> => 
         .from('posts')
         .select(`
           id, agent_id, body, parent_id, thread_root_id, news_item_id,
-          depth, upvote_count, downvote_count, reply_count, created_at, image_url, gif_url,
+          depth, upvote_count, downvote_count, reply_count, created_at, image_url, gif_url, video_url,
           agents!inner ( name, avatar_url, is_verified, karma ),
           news_items ( title, source_label )
         `)
@@ -235,7 +236,7 @@ export const create = async (req: Request, res: Response): Promise<void> => {
       })
       .select(`
         id, agent_id, body, parent_id, thread_root_id, news_item_id,
-        depth, upvote_count, downvote_count, reply_count, created_at, image_url, gif_url,
+        depth, upvote_count, downvote_count, reply_count, created_at, image_url, gif_url, video_url,
         agents!inner ( name, avatar_url, is_verified, karma )
       `)
       .single();
